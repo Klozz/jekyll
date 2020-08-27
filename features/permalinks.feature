@@ -71,14 +71,14 @@ Feature: Fancy permalinks
     And I should see "Totally custom." in "_site/03-27-2009/custom-permalink-schema.html"
 
   Scenario: Use custom permalink schema with date and time
-    Given I have a _posts directory
+    Given I have a configuration file with:
+    | key         | value              |
+    | permalink   | "/:year:month:day:hour:minute:second.html" |
+    | timezone    | UTC                |
+    And I have a _posts directory
     And I have the following post:
       | title                   | category | date                | content         |
       | Custom Permalink Schema | stuff    | 2009-03-27 22:31:07 | Totally custom. |
-    And I have a configuration file with:
-      | key         | value              |
-      | permalink   | "/:year:month:day:hour:minute:second.html" |
-      | timezone    | UTC                |
     When I run jekyll build
     Then I should get a zero exit status
     And the _site directory should exist
@@ -142,3 +142,29 @@ Feature: Fancy permalinks
     And the _site directory should exist
     And I should see "I am PHP" in "_site/2016/i-am-php.php"
     And I should see "I am also PHP" in "_site/i-am-also-php.php"
+
+  Scenario: Use the same permalink twice
+    Given I have a "cool.md" page with permalink "/amazing.html" that contains "I am cool"
+    And I have an "awesome.md" page with permalink "/amazing.html" that contains "I am also awesome"
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the _site directory should exist
+    And I should see "Conflict: The URL '" in the build output
+    And I should see "amazing.html' is the destination for the following pages: awesome.md, cool.md" in the build output
+
+  Scenario: Redirecting from an existing permalink
+    Given I have a configuration file with "plugins" set to "[jekyll-redirect-from]"
+    And I have a "deals.html" file with content:
+      """
+      ---
+      permalink: /deals/
+      redirect_from:
+        - /offers/
+      ---
+      """
+    And I have a "offers.html" page with permalink "/offers/" that contains "Hurry! Limited time only!"
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the _site directory should exist
+    And I should not see "Conflict: The URL '" in the build output
+    And I should not see "offers/index.html' is the destination for the following pages: offers.html, redirect.html" in the build output

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Jekyll
   module Filters
     module GroupingFilters
@@ -39,22 +41,21 @@ module Jekyll
       end
 
       private
+
       def parse_expression(str)
-        Liquid::Variable.new(str, {})
+        Liquid::Variable.new(str, Liquid::ParseContext.new)
       end
 
-      private
       def groupable?(element)
         element.respond_to?(:group_by)
       end
 
-      private
       def grouped_array(groups)
         groups.each_with_object([]) do |item, array|
           array << {
             "name"  => item.first,
             "items" => item.last,
-            "size"  => item.last.size
+            "size"  => item.last.size,
           }
         end
       end
